@@ -37,7 +37,7 @@ HTTP容错代理服务.
 
 #### 配置样例
 
-请参考: [config_help.toml](https://github.com/CharLemAznable/viola/blob/main/config_help.toml)
+请参考: [config_help.toml](https://github.com/CharLemAznable/violet/blob/main/config_help.toml)
 
 #### 数据平面
 
