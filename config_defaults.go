@@ -15,12 +15,14 @@ func formatBulkheadConfig(cfg *BulkheadConfig, def *BulkheadConfig) {
 	cfg.MaxConcurrentCalls = defaultString(cfg.MaxConcurrentCalls, def.MaxConcurrentCalls)
 	cfg.MaxWaitDuration = defaultString(cfg.MaxWaitDuration, def.MaxWaitDuration)
 	cfg.WhenFullResponse = defaultString(cfg.WhenFullResponse, def.WhenFullResponse)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func formatTimeLimiterConfig(cfg *TimeLimiterConfig, def *TimeLimiterConfig) {
 	cfg.Disabled = defaultString(cfg.Disabled, def.Disabled)
 	cfg.TimeoutDuration = defaultString(cfg.TimeoutDuration, def.TimeoutDuration)
 	cfg.WhenTimeoutResponse = defaultString(cfg.WhenTimeoutResponse, def.WhenTimeoutResponse)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func formatRateLimiterConfig(cfg *RateLimiterConfig, def *RateLimiterConfig) {
@@ -29,6 +31,7 @@ func formatRateLimiterConfig(cfg *RateLimiterConfig, def *RateLimiterConfig) {
 	cfg.LimitRefreshPeriod = defaultString(cfg.LimitRefreshPeriod, def.LimitRefreshPeriod)
 	cfg.LimitForPeriod = defaultString(cfg.LimitForPeriod, def.LimitForPeriod)
 	cfg.WhenOverRateResponse = defaultString(cfg.WhenOverRateResponse, def.WhenOverRateResponse)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func formatCircuitBreakerConfig(cfg *CircuitBreakerConfig, def *CircuitBreakerConfig) {
@@ -46,6 +49,7 @@ func formatCircuitBreakerConfig(cfg *CircuitBreakerConfig, def *CircuitBreakerCo
 	cfg.PermittedNumberOfCallsInHalfOpenState = defaultString(cfg.PermittedNumberOfCallsInHalfOpenState, def.PermittedNumberOfCallsInHalfOpenState)
 	cfg.MaxWaitDurationInHalfOpenState = defaultString(cfg.MaxWaitDurationInHalfOpenState, def.MaxWaitDurationInHalfOpenState)
 	cfg.WhenOverLoadResponse = defaultString(cfg.WhenOverLoadResponse, def.WhenOverLoadResponse)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func formatRetryConfig(cfg *RetryConfig, def *RetryConfig) {
@@ -56,6 +60,7 @@ func formatRetryConfig(cfg *RetryConfig, def *RetryConfig) {
 	cfg.ResponseFailedPredicateContext = defaultMap(cfg.ResponseFailedPredicateContext, def.ResponseFailedPredicateContext)
 	cfg.WaitInterval = defaultString(cfg.WaitInterval, def.WaitInterval)
 	cfg.WhenMaxRetriesResponse = defaultString(cfg.WhenMaxRetriesResponse, def.WhenMaxRetriesResponse)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func formatCacheConfig(cfg *CacheConfig, def *CacheConfig) {
@@ -64,6 +69,7 @@ func formatCacheConfig(cfg *CacheConfig, def *CacheConfig) {
 	cfg.ItemTTL = defaultString(cfg.ItemTTL, def.ItemTTL)
 	cfg.ResponseCachePredicate = defaultString(cfg.ResponseCachePredicate, def.ResponseCachePredicate)
 	cfg.ResponseCachePredicateContext = defaultMap(cfg.ResponseCachePredicateContext, def.ResponseCachePredicateContext)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func formatFallbackConfig(cfg *FallbackConfig, def *FallbackConfig) {
@@ -73,6 +79,7 @@ func formatFallbackConfig(cfg *FallbackConfig, def *FallbackConfig) {
 	cfg.FallbackFunctionContext = defaultMap(cfg.FallbackFunctionContext, def.FallbackFunctionContext)
 	cfg.ResponseFailedPredicate = defaultString(cfg.ResponseFailedPredicate, def.ResponseFailedPredicate)
 	cfg.ResponseFailedPredicateContext = defaultMap(cfg.ResponseFailedPredicateContext, def.ResponseFailedPredicateContext)
+	cfg.Order = defaultString(cfg.Order, def.Order)
 }
 
 func defaultString(v string, def string) string {

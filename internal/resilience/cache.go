@@ -19,15 +19,18 @@ type CacheConfig struct {
 	ItemTTL                       string
 	ResponseCachePredicate        string
 	ResponseCachePredicateContext map[string]string
+	Order                         string
 }
 
-func NewCachePlugin(name string, config *CacheConfig) (cache.Cache[Req, Rsp], ReverseProxyDecorator) {
+const CacheDefaultOrder = "600"
+
+func NewCachePlugin(name string, config *CacheConfig) (cache.Cache[Req, Rsp], *OrderedDecorator) {
 	if !ge.ToBool(config.Enabled) {
-		return nil, ReverseProxyIdentity
+		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, CacheDefaultOrder)
 	}
 	entry := cache.NewCache[Req, Rsp](name+"_cache",
 		cacheConfigBuilders(config)...).WithMarshalFn(marshalFn, unmarshalFn)
-	return entry, func(rp ReverseProxy) ReverseProxy {
+	return entry, newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		rt := rp.Transport
 		rp.Transport = RoundTripperFunc(func(req Req) (Rsp, error) {
 			rsp, err := entry.GetOrLoad(req, rt.RoundTrip)
@@ -37,7 +40,7 @@ func NewCachePlugin(name string, config *CacheConfig) (cache.Cache[Req, Rsp], Re
 			return rsp, err
 		})
 		return rp
-	}
+	}, config.Order, CacheDefaultOrder)
 }
 
 func cacheConfigBuilders(config *CacheConfig) []cache.ConfigBuilder {

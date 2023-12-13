@@ -29,11 +29,13 @@ func TestConfigHelpInfo(t *testing.T) {
 					MaxConcurrentCalls: "最大并发量, 默认值: 25",
 					MaxWaitDuration:    "当并发超量时的最大等待时长, 默认值: 0",
 					WhenFullResponse:   "当并发超量时的fallback响应, 要求为完整的HTTP报文格式",
+					Order:              "调用的包装顺序, 默认值: '100'",
 				},
 				TimeLimiter: violet.TimeLimiterConfig{
 					Disabled:            "调用时长限制开关, true/false",
 					TimeoutDuration:     "调用时限, 默认值: 60s",
 					WhenTimeoutResponse: "当调用超时时的fallback响应, 要求为完整的HTTP报文格式",
+					Order:               "调用的包装顺序, 默认值: '200'",
 				},
 				RateLimiter: violet.RateLimiterConfig{
 					Disabled:             "调用频率限制开关, true/false",
@@ -41,6 +43,7 @@ func TestConfigHelpInfo(t *testing.T) {
 					LimitRefreshPeriod:   "并发数量的刷新时间, 默认值: 500ns",
 					LimitForPeriod:       "刷新时间内允许的并发数量, 默认值: 50",
 					WhenOverRateResponse: "当调用超速时的fallback响应, 要求为完整的HTTP报文格式",
+					Order:                "调用的包装顺序, 默认值: '300'",
 				},
 				CircuitBreaker: violet.CircuitBreakerConfig{
 					Disabled:                  "断路器开关, true/false",
@@ -59,6 +62,7 @@ func TestConfigHelpInfo(t *testing.T) {
 					PermittedNumberOfCallsInHalfOpenState: "断路半开时允许通过的调用次数, 默认值: 10",
 					MaxWaitDurationInHalfOpenState:        "断路半开时的最大等待时长, 默认值: 0",
 					WhenOverLoadResponse:                  "当断路开启时的fallback响应, 要求为完整的HTTP报文格式",
+					Order:                                 "调用的包装顺序, 默认值: '400'",
 				},
 				Retry: violet.RetryConfig{
 					Disabled:                "重试器开关, true/false",
@@ -70,6 +74,7 @@ func TestConfigHelpInfo(t *testing.T) {
 					},
 					WaitInterval:           "重试的等待时长, 默认值: 500ms",
 					WhenMaxRetriesResponse: "当最后一次重试失败后返回错误时的fallback响应, 要求为完整的HTTP报文格式",
+					Order:                  "调用的包装顺序, 默认值: '500'",
 				},
 				Cache: violet.CacheConfig{
 					Enabled:                "缓存开关, true/false",
@@ -79,6 +84,7 @@ func TestConfigHelpInfo(t *testing.T) {
 					ResponseCachePredicateContext: map[string]string{
 						"断言器上下文参数": "可自定义断言器的判断逻辑",
 					},
+					Order: "调用的包装顺序, 默认值: '600'",
 				},
 				Fallback: violet.FallbackConfig{
 					Enabled:          "故障恢复开关, true/false",
@@ -91,6 +97,7 @@ func TestConfigHelpInfo(t *testing.T) {
 					ResponseFailedPredicateContext: map[string]string{
 						"断言器上下文参数": "可自定义断言器的判断逻辑",
 					},
+					Order: "调用的包装顺序, 默认值: '700'",
 				},
 			},
 		},

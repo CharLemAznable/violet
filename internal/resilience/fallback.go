@@ -13,11 +13,14 @@ type FallbackConfig struct {
 	FallbackFunctionContext        map[string]string
 	ResponseFailedPredicate        string
 	ResponseFailedPredicateContext map[string]string
+	Order                          string
 }
 
-func NewFallbackPlugin(config *FallbackConfig) ReverseProxyDecorator {
+const FallbackDefaultOrder = "700"
+
+func NewFallbackPlugin(config *FallbackConfig) *OrderedDecorator {
 	if !ge.ToBool(config.Enabled) {
-		return ReverseProxyIdentity
+		return newOrderedDecorator(ReverseProxyIdentity, config.Order, FallbackDefaultOrder)
 	}
 	fallbackFn := buildFallbackFunction(
 		GetFallbackFunction(config.FallbackFunction),
@@ -25,16 +28,16 @@ func NewFallbackPlugin(config *FallbackConfig) ReverseProxyDecorator {
 	if fallbackFn == nil {
 		fallbackFn = responseFn(config.FallbackResponse)
 		if fallbackFn == nil {
-			return ReverseProxyIdentity
+			return newOrderedDecorator(ReverseProxyIdentity, config.Order, FallbackDefaultOrder)
 		}
 	}
 	predicate := GetRspFailedPredicate(config.ResponseFailedPredicate)
 	context := config.ResponseFailedPredicateContext
 	predicateFn := buildFallbackResponsePredicate(predicate, context)
-	return func(rp ReverseProxy) ReverseProxy {
+	return newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		decorate := decorator.OfFunction(rp.Transport.RoundTrip).WithFallback(fallbackFn,
 			func(_ Req, rsp Rsp, err error, panic any) bool { return predicateFn(rsp, err, panic) })
 		rp.Transport = RoundTripperFunc(decorate.Decorate())
 		return rp
-	}
+	}, config.Order, FallbackDefaultOrder)
 }

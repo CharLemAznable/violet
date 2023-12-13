@@ -17,26 +17,26 @@ import (
 
 func TestFallbackNotEnabled(t *testing.T) {
 	decorator := resilience.NewFallbackPlugin(&resilience.FallbackConfig{})
-	if !ge.EqualsPointer(ReverseProxyIdentity, decorator) {
+	if !ge.EqualsPointer(ReverseProxyIdentity, decorator.Decorator) {
 		t.Error("Expected get ReverseProxyIdentity but not")
 	}
 
 	decorator = resilience.NewFallbackPlugin(&resilience.FallbackConfig{Enabled: "true"})
-	if !ge.EqualsPointer(ReverseProxyIdentity, decorator) {
+	if !ge.EqualsPointer(ReverseProxyIdentity, decorator.Decorator) {
 		t.Error("Expected get ReverseProxyIdentity but not")
 	}
 }
 
 func TestFallbackResponse(t *testing.T) {
-	decorator := resilience.NewFallbackPlugin(&resilience.FallbackConfig{
+	decorator := resilience.NewDecorator("test", newFallbackResilienceConfig(&resilience.FallbackConfig{
 		Enabled:          "true",
 		FallbackResponse: "HTTP/1.1 200 OK\r\n\r\nFallbackResponse",
-	})
+	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
 		return nil, errors.New("error")
 	})
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
@@ -55,15 +55,15 @@ func TestFallbackFunction(t *testing.T) {
 				strings.NewReader("HTTP/1.1 200 OK\r\n\r\nFallbackFunction")), req)
 		})
 
-	decorator := resilience.NewFallbackPlugin(&resilience.FallbackConfig{
+	decorator := resilience.NewDecorator("test", newFallbackResilienceConfig(&resilience.FallbackConfig{
 		Enabled:          "true",
 		FallbackFunction: "demo_func",
-	})
+	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
 		panic("panic")
 	})
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
@@ -80,13 +80,13 @@ func TestFallback(t *testing.T) {
 		return http.ReadResponse(bufio.NewReader(
 			strings.NewReader("HTTP/1.1 500 Internal Server Error\r\n\r\n")), req)
 	})
-	decorator := resilience.NewFallbackPlugin(&resilience.FallbackConfig{
+	decorator := resilience.NewDecorator("test", newFallbackResilienceConfig(&resilience.FallbackConfig{
 		Enabled:          "true",
 		FallbackResponse: "HTTP/1.1 200 OK\r\n\r\nFallbackResponse",
 		FallbackFunction: "not_exists_func",
-	})
+	}))
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)

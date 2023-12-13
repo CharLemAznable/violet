@@ -14,23 +14,26 @@ type BulkheadConfig struct {
 	MaxConcurrentCalls string
 	MaxWaitDuration    string
 	WhenFullResponse   string
+	Order              string
 }
 
-func NewBulkheadPlugin(name string, config *BulkheadConfig) (bulkhead.Bulkhead, ReverseProxyDecorator) {
+const BulkheadDefaultOrder = "100"
+
+func NewBulkheadPlugin(name string, config *BulkheadConfig) (bulkhead.Bulkhead, *OrderedDecorator) {
 	if ge.ToBool(config.Disabled) {
-		return nil, ReverseProxyIdentity
+		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, BulkheadDefaultOrder)
 	}
 	entry := bulkhead.NewBulkhead(name+"_bulkhead",
 		bulkheadConfigBuilders(config)...)
 	whenFullFn := responseFn(config.WhenFullResponse)
-	return entry, func(rp ReverseProxy) ReverseProxy {
+	return entry, newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		decorate := decorator.OfFunction(rp.Transport.RoundTrip).WithBulkhead(entry)
 		if whenFullFn != nil {
 			decorate = decorate.WhenFull(whenFullFn)
 		}
 		rp.Transport = RoundTripperFunc(decorate.Decorate())
 		return rp
-	}
+	}, config.Order, BulkheadDefaultOrder)
 }
 
 func bulkheadConfigBuilders(config *BulkheadConfig) []bulkhead.ConfigBuilder {

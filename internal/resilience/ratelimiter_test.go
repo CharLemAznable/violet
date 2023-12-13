@@ -19,19 +19,19 @@ func TestRateLimiter(t *testing.T) {
 		t.Errorf("Expected ratelimiter is nil, but got '%v'", entry)
 	}
 
-	_, decorator := resilience.NewRateLimiterPlugin("test", &resilience.RateLimiterConfig{
+	decorator := resilience.NewDecorator("test", newRateLimiterResilienceConfig(&resilience.RateLimiterConfig{
 		TimeoutDuration:      "1s",
 		LimitRefreshPeriod:   "2s",
 		LimitForPeriod:       "2",
 		WhenOverRateResponse: "HTTP/1.1 200 OK\r\n\r\nRateLimiterNotPermitted",
-	})
+	}))
 	backend := httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r Req) {
 			time.Sleep(time.Millisecond * 500)
 			_, _ = w.Write([]byte("success"))
 		}))
 	backendURL, _ := url.Parse(backend.URL)
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)

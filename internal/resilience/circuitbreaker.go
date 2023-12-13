@@ -25,23 +25,26 @@ type CircuitBreakerConfig struct {
 	PermittedNumberOfCallsInHalfOpenState string
 	MaxWaitDurationInHalfOpenState        string
 	WhenOverLoadResponse                  string
+	Order                                 string
 }
 
-func NewCircuitBreakerPlugin(name string, config *CircuitBreakerConfig) (circuitbreaker.CircuitBreaker, ReverseProxyDecorator) {
+const CircuitBreakerDefaultOrder = "400"
+
+func NewCircuitBreakerPlugin(name string, config *CircuitBreakerConfig) (circuitbreaker.CircuitBreaker, *OrderedDecorator) {
 	if ge.ToBool(config.Disabled) {
-		return nil, ReverseProxyIdentity
+		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, CircuitBreakerDefaultOrder)
 	}
 	entry := circuitbreaker.NewCircuitBreaker(name+"_circuitbreaker",
 		circuitbreakerConfigBuilders(config)...)
 	whenOverLoadFn := responseFn(config.WhenOverLoadResponse)
-	return entry, func(rp ReverseProxy) ReverseProxy {
+	return entry, newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		decorate := decorator.OfFunction(rp.Transport.RoundTrip).WithCircuitBreaker(entry)
 		if whenOverLoadFn != nil {
 			decorate = decorate.WhenOverLoad(whenOverLoadFn)
 		}
 		rp.Transport = RoundTripperFunc(decorate.Decorate())
 		return rp
-	}
+	}, config.Order, CircuitBreakerDefaultOrder)
 }
 
 func circuitbreakerConfigBuilders(config *CircuitBreakerConfig) []circuitbreaker.ConfigBuilder {

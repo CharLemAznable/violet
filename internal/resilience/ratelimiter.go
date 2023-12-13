@@ -15,23 +15,26 @@ type RateLimiterConfig struct {
 	LimitRefreshPeriod   string
 	LimitForPeriod       string
 	WhenOverRateResponse string
+	Order                string
 }
 
-func NewRateLimiterPlugin(name string, config *RateLimiterConfig) (ratelimiter.RateLimiter, ReverseProxyDecorator) {
+const RateLimiterDefaultOrder = "300"
+
+func NewRateLimiterPlugin(name string, config *RateLimiterConfig) (ratelimiter.RateLimiter, *OrderedDecorator) {
 	if ge.ToBool(config.Disabled) {
-		return nil, ReverseProxyIdentity
+		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, RateLimiterDefaultOrder)
 	}
 	entry := ratelimiter.NewRateLimiter(name+"_ratelimiter",
 		ratelimiterConfigBuilders(config)...)
 	whenOverRateFn := responseFn(config.WhenOverRateResponse)
-	return entry, func(rp ReverseProxy) ReverseProxy {
+	return entry, newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		decorate := decorator.OfFunction(rp.Transport.RoundTrip).WithRateLimiter(entry)
 		if whenOverRateFn != nil {
 			decorate = decorate.WhenOverRate(whenOverRateFn)
 		}
 		rp.Transport = RoundTripperFunc(decorate.Decorate())
 		return rp
-	}
+	}, config.Order, RateLimiterDefaultOrder)
 }
 
 func ratelimiterConfigBuilders(config *RateLimiterConfig) []ratelimiter.ConfigBuilder {

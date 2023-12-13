@@ -3,13 +3,7 @@ package violet
 import (
 	"fmt"
 	"github.com/CharLemAznable/ge"
-	"github.com/CharLemAznable/resilience4go/bulkhead"
-	"github.com/CharLemAznable/resilience4go/cache"
-	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/promhelper"
-	"github.com/CharLemAznable/resilience4go/ratelimiter"
-	"github.com/CharLemAznable/resilience4go/retry"
-	"github.com/CharLemAznable/resilience4go/timelimiter"
 	"github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 type DataPlane interface {
@@ -209,12 +202,7 @@ type endpoint struct {
 
 	proxy *httputil.ReverseProxy
 
-	bulkhead       bulkhead.Bulkhead
-	timelimiter    timelimiter.TimeLimiter
-	ratelimiter    ratelimiter.RateLimiter
-	circuitbreaker circuitbreaker.CircuitBreaker
-	retry          retry.Retry
-	cache          cache.Cache[*http.Request, *http.Response]
+	resilience *resilience.Decorator
 
 	registerFn   promhelper.RegisterFn
 	unregisterFn promhelper.UnregisterFn
@@ -230,125 +218,46 @@ func newEndpoint(config *EndpointConfig) *endpoint {
 		proxy:               proxy.NewReverseProxy(targetURL),
 	}
 	e.proxy = proxy.DumpDecorator(ge.ToBool(config.DumpTarget), proxy.TargetDump, e.name)(e.proxy)
-	bulkheadEntry, bulkheadDecorator := resilience.NewBulkheadPlugin(e.name, &config.Resilience.Bulkhead)
-	e.bulkhead = bulkheadEntry
-	e.proxy = bulkheadDecorator(e.proxy)
-	timelimiterEntry, timelimiterDecorator := resilience.NewTimeLimiterPlugin(e.name, &config.Resilience.TimeLimiter)
-	e.timelimiter = timelimiterEntry
-	e.proxy = timelimiterDecorator(e.proxy)
-	ratelimiterEntry, ratelimiterDecorator := resilience.NewRateLimiterPlugin(e.name, &config.Resilience.RateLimiter)
-	e.ratelimiter = ratelimiterEntry
-	e.proxy = ratelimiterDecorator(e.proxy)
-	circuitbreakerEntry, circuitbreakerDecorator := resilience.NewCircuitBreakerPlugin(e.name, &config.Resilience.CircuitBreaker)
-	e.circuitbreaker = circuitbreakerEntry
-	e.proxy = circuitbreakerDecorator(e.proxy)
-	retryEntry, retryDecorator := resilience.NewRetryPlugin(e.name, &config.Resilience.Retry)
-	e.retry = retryEntry
-	e.proxy = retryDecorator(e.proxy)
-	cacheEntry, cacheDecorator := resilience.NewCachePlugin(e.name, &config.Resilience.Cache)
-	e.cache = cacheEntry
-	e.proxy = cacheDecorator(e.proxy)
-	fallbackDecorator := resilience.NewFallbackPlugin(&config.Resilience.Fallback)
-	e.proxy = fallbackDecorator(e.proxy)
+	e.resilience = resilience.NewDecorator(e.name, &config.Resilience)
+	e.proxy = e.resilience.Decorate(e.proxy)
 	e.proxy = proxy.DumpDecorator(ge.ToBool(config.DumpSource), proxy.SourceDump, e.name)(e.proxy)
-	e.registerFn, e.unregisterFn = e.registry()
+	e.registerFn = func(registerer prometheus.Registerer) error {
+		err := prometheus.MultiError{}
+		err.Append(e.resilience.RegisterFn(registerer))
+		return err.MaybeUnwrap()
+	}
+	e.unregisterFn = func(registerer prometheus.Registerer) bool {
+		ret := true
+		ret = e.resilience.UnregisterFn(registerer) && ret
+		return ret
+	}
 	return e
 }
 
-func (e *endpoint) registry() (promhelper.RegisterFn, promhelper.UnregisterFn) {
-	var (
-		bulkheadRegister       = emptyRegister
-		timelimiterRegister    = emptyRegister
-		ratelimiterRegister    = emptyRegister
-		circuitbreakerRegister = emptyRegister
-		retryRegister          = emptyRegister
-		cacheRegister          = emptyRegister
-
-		bulkheadUnregister       = emptyUnregister
-		timelimiterUnregister    = emptyUnregister
-		ratelimiterUnregister    = emptyUnregister
-		circuitbreakerUnregister = emptyUnregister
-		retryUnregister          = emptyUnregister
-		cacheUnregister          = emptyUnregister
-	)
-	if e.bulkhead != nil {
-		bulkheadRegister, bulkheadUnregister =
-			promhelper.BulkheadRegistry(e.bulkhead)
-	}
-	if e.timelimiter != nil {
-		timelimiterRegister, timelimiterUnregister =
-			promhelper.TimeLimiterRegistry(e.timelimiter)
-	}
-	if e.ratelimiter != nil {
-		ratelimiterRegister, ratelimiterUnregister =
-			promhelper.RateLimiterRegistry(e.ratelimiter)
-	}
-	if e.circuitbreaker != nil {
-		var buckets []float64
-		for _, b := range prometheus.DefBuckets {
-			buckets = append(buckets, float64(time.Second)*b)
-		}
-		circuitbreakerRegister, circuitbreakerUnregister =
-			promhelper.CircuitBreakerRegistry(e.circuitbreaker, buckets...)
-	}
-	if e.retry != nil {
-		retryRegister, retryUnregister =
-			promhelper.RetryRegistry(e.retry)
-	}
-	if e.cache != nil {
-		cacheRegister, cacheUnregister =
-			promhelper.CacheRegistry(e.cache)
-	}
-	return func(registerer prometheus.Registerer) error {
-			err := prometheus.MultiError{}
-			err.Append(bulkheadRegister(registerer))
-			err.Append(timelimiterRegister(registerer))
-			err.Append(ratelimiterRegister(registerer))
-			err.Append(circuitbreakerRegister(registerer))
-			err.Append(retryRegister(registerer))
-			err.Append(cacheRegister(registerer))
-			return err.MaybeUnwrap()
-		},
-		func(registerer prometheus.Registerer) bool {
-			ret := true
-			ret = bulkheadUnregister(registerer) && ret
-			ret = timelimiterUnregister(registerer) && ret
-			ret = ratelimiterUnregister(registerer) && ret
-			ret = circuitbreakerUnregister(registerer) && ret
-			ret = retryUnregister(registerer) && ret
-			ret = cacheUnregister(registerer) && ret
-			return ret
-		}
-}
-
-func emptyRegister(_ prometheus.Registerer) error { return nil }
-
-func emptyUnregister(_ prometheus.Registerer) bool { return true }
-
 func (e *endpoint) disableCircuitBreaker() error {
-	if e.circuitbreaker == nil {
+	if e.resilience.CircuitBreaker == nil {
 		return nil
 	}
-	return e.circuitbreaker.TransitionToDisabled()
+	return e.resilience.CircuitBreaker.TransitionToDisabled()
 }
 
 func (e *endpoint) forceOpenCircuitBreaker() error {
-	if e.circuitbreaker == nil {
+	if e.resilience.CircuitBreaker == nil {
 		return nil
 	}
-	return e.circuitbreaker.TransitionToForcedOpen()
+	return e.resilience.CircuitBreaker.TransitionToForcedOpen()
 }
 
 func (e *endpoint) closeCircuitBreaker() error {
-	if e.circuitbreaker == nil {
+	if e.resilience.CircuitBreaker == nil {
 		return nil
 	}
-	return e.circuitbreaker.TransitionToClosedState()
+	return e.resilience.CircuitBreaker.TransitionToClosedState()
 }
 
 func (e *endpoint) circuitBreakerState() string {
-	if e.circuitbreaker == nil {
+	if e.resilience.CircuitBreaker == nil {
 		return "UNKNOWN"
 	}
-	return string(e.circuitbreaker.State())
+	return string(e.resilience.CircuitBreaker.State())
 }

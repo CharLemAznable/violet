@@ -19,18 +19,18 @@ func TestRetry(t *testing.T) {
 		t.Errorf("Expected retry is nil, but got '%v'", entry)
 	}
 
-	_, decorator := resilience.NewRetryPlugin("test", &resilience.RetryConfig{
+	decorator := resilience.NewDecorator("test", newRetryResilienceConfig(&resilience.RetryConfig{
 		MaxAttempts:            "2",
 		FailAfterMaxAttempts:   "true",
 		WaitInterval:           "0",
 		WhenMaxRetriesResponse: "HTTP/1.1 200 OK\r\n\r\nRetryMaxRetries",
-	})
+	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
 		return http.ReadResponse(bufio.NewReader(
 			strings.NewReader("HTTP/1.1 500 Internal Server Error\r\n\r\n")), req)
 	})
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)

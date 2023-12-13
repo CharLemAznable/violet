@@ -24,11 +24,11 @@ func TestCache(t *testing.T) {
 		t.Errorf("Expected cache is nil, but got '%v'", entry)
 	}
 
-	_, decorator := resilience.NewCachePlugin("test", &resilience.CacheConfig{
+	decorator := resilience.NewDecorator("test", newCacheResilienceConfig(&resilience.CacheConfig{
 		Enabled:  "true",
 		Capacity: "10",
 		ItemTTL:  "10s",
-	})
+	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
 		code := req.URL.Query().Get("code")
 		statusCode, _ := strconv.Atoi(code)
@@ -40,7 +40,7 @@ func TestCache(t *testing.T) {
 		return http.ReadResponse(bufio.NewReader(strings.NewReader(resp)), req)
 	})
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL+"?code=200", nil)

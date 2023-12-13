@@ -23,7 +23,7 @@ func TestCircuitBreaker(t *testing.T) {
 		t.Errorf("Expected circuitbreaker is nil, but got '%v'", entry)
 	}
 
-	_, decorator := resilience.NewCircuitBreakerPlugin("test", &resilience.CircuitBreakerConfig{
+	decorator := resilience.NewDecorator("test", newCircuitBreakerResilienceConfig(&resilience.CircuitBreakerConfig{
 		SlidingWindowSize:                     "10",
 		MinimumNumberOfCalls:                  "10",
 		FailureRateThreshold:                  "50",
@@ -31,7 +31,7 @@ func TestCircuitBreaker(t *testing.T) {
 		WaitIntervalInOpenState:               "5s",
 		PermittedNumberOfCallsInHalfOpenState: "2",
 		WhenOverLoadResponse:                  "HTTP/1.1 200 OK\r\n\r\nCircuitBreakerNotPermitted",
-	})
+	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
 		body, _ := DumpRequestBody(req)
 		i, _ := strconv.ParseInt(string(body), 10, 64)
@@ -42,7 +42,7 @@ func TestCircuitBreaker(t *testing.T) {
 		return nil, errors.New("error")
 	})
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	reverseProxy.ErrorHandler = func(rw http.ResponseWriter, _ Req, _ error) {
 		rw.WriteHeader(http.StatusBadGateway)
 	}
@@ -72,7 +72,7 @@ func TestCircuitBreaker(t *testing.T) {
 }
 
 func TestCircuitBreakerSlow(t *testing.T) {
-	_, decorator := resilience.NewCircuitBreakerPlugin("test", &resilience.CircuitBreakerConfig{
+	decorator := resilience.NewDecorator("test", newCircuitBreakerResilienceConfig(&resilience.CircuitBreakerConfig{
 		SlidingWindowType:                     "time_based",
 		SlidingWindowSize:                     "10",
 		MinimumNumberOfCalls:                  "10",
@@ -80,14 +80,14 @@ func TestCircuitBreakerSlow(t *testing.T) {
 		SlowCallDurationThreshold:             "1s",
 		PermittedNumberOfCallsInHalfOpenState: "2",
 		MaxWaitDurationInHalfOpenState:        "5s",
-	})
+	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
 		time.Sleep(time.Second * 2)
 		return http.ReadResponse(bufio.NewReader(
 			strings.NewReader("HTTP/1.1 200 OK\r\n\r\nOK")), req)
 	})
 	backendURL, _ := url.Parse("http://a.b.c")
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	reverseProxy.ErrorHandler = func(rw http.ResponseWriter, _ Req, _ error) {
 		rw.WriteHeader(http.StatusBadGateway)
 	}

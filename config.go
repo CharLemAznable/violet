@@ -29,17 +29,8 @@ type EndpointConfig struct {
 	Resilience ResilienceConfig
 }
 
-type ResilienceConfig struct {
-	Bulkhead       BulkheadConfig
-	TimeLimiter    TimeLimiterConfig
-	RateLimiter    RateLimiterConfig
-	CircuitBreaker CircuitBreakerConfig
-	Retry          RetryConfig
-	Cache          CacheConfig
-	Fallback       FallbackConfig
-}
-
 type (
+	ResilienceConfig     = resilience.Config
 	BulkheadConfig       = resilience.BulkheadConfig
 	TimeLimiterConfig    = resilience.TimeLimiterConfig
 	RateLimiterConfig    = resilience.RateLimiterConfig

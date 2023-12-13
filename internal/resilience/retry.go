@@ -17,23 +17,26 @@ type RetryConfig struct {
 	ResponseFailedPredicateContext map[string]string
 	WaitInterval                   string
 	WhenMaxRetriesResponse         string
+	Order                          string
 }
 
-func NewRetryPlugin(name string, config *RetryConfig) (retry.Retry, ReverseProxyDecorator) {
+const RetryDefaultOrder = "500"
+
+func NewRetryPlugin(name string, config *RetryConfig) (retry.Retry, *OrderedDecorator) {
 	if ge.ToBool(config.Disabled) {
-		return nil, ReverseProxyIdentity
+		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, RetryDefaultOrder)
 	}
 	entry := retry.NewRetry(name+"_retry",
 		retryConfigBuilders(config)...)
 	whenMaxRetriesFn := responseFn(config.WhenMaxRetriesResponse)
-	return entry, func(rp ReverseProxy) ReverseProxy {
+	return entry, newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		decorate := decorator.OfFunction(rp.Transport.RoundTrip).WithRetry(entry)
 		if whenMaxRetriesFn != nil {
 			decorate = decorate.WhenMaxRetries(whenMaxRetriesFn)
 		}
 		rp.Transport = RoundTripperFunc(decorate.Decorate())
 		return rp
-	}
+	}, config.Order, RetryDefaultOrder)
 }
 
 func retryConfigBuilders(config *RetryConfig) []retry.ConfigBuilder {

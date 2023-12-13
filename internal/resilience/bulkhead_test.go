@@ -18,18 +18,18 @@ func TestBulkhead(t *testing.T) {
 		t.Errorf("Expected bulkhead is nil, but got '%v'", entry)
 	}
 
-	_, decorator := resilience.NewBulkheadPlugin("test", &resilience.BulkheadConfig{
+	decorator := resilience.NewDecorator("test", newBulkheadResilienceConfig(&resilience.BulkheadConfig{
 		MaxConcurrentCalls: "1",
 		MaxWaitDuration:    "1s",
 		WhenFullResponse:   "HTTP/1.1 200 OK\r\n\r\nBulkheadFull",
-	})
+	}))
 	backend := httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r Req) {
 			time.Sleep(time.Second * 3)
 			_, _ = w.Write([]byte("success"))
 		}))
 	backendURL, _ := url.Parse(backend.URL)
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)

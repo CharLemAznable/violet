@@ -254,4 +254,11 @@ func TestDataPlane(t *testing.T) {
 	if string(responseBody) != "UNKNOWN" {
 		t.Errorf("Expected responseBody is 'UNKNOWN', but got '%s'", string(responseBody))
 	}
+
+	dataPlane.SetConfig(&violet.Config{})
+	request, _ = http.NewRequest("GET", ctrlServer.URL+"/metrics", nil)
+	requestBody, _ = elf.DumpRequestBody(request)
+	response, _ = server.Client().Do(request)
+	responseBody, _ = elf.DumpResponseBody(response)
+	t.Logf("metrics response with empty config:\n%s", string(responseBody))
 }

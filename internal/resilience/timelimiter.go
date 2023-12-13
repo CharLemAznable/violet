@@ -12,23 +12,26 @@ type TimeLimiterConfig struct {
 	Disabled            string
 	TimeoutDuration     string
 	WhenTimeoutResponse string
+	Order               string
 }
 
-func NewTimeLimiterPlugin(name string, config *TimeLimiterConfig) (timelimiter.TimeLimiter, ReverseProxyDecorator) {
+const TimeLimiterDefaultOrder = "200"
+
+func NewTimeLimiterPlugin(name string, config *TimeLimiterConfig) (timelimiter.TimeLimiter, *OrderedDecorator) {
 	if ge.ToBool(config.Disabled) {
-		return nil, ReverseProxyIdentity
+		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, TimeLimiterDefaultOrder)
 	}
 	entry := timelimiter.NewTimeLimiter(name+"_timelimiter",
 		timelimiterConfigBuilders(config)...)
 	whenTimeoutFn := responseFn(config.WhenTimeoutResponse)
-	return entry, func(rp ReverseProxy) ReverseProxy {
+	return entry, newOrderedDecorator(func(rp ReverseProxy) ReverseProxy {
 		decorate := decorator.OfFunction(rp.Transport.RoundTrip).WithTimeLimiter(entry)
 		if whenTimeoutFn != nil {
 			decorate = decorate.WhenTimeout(whenTimeoutFn)
 		}
 		rp.Transport = RoundTripperFunc(decorate.Decorate())
 		return rp
-	}
+	}, config.Order, TimeLimiterDefaultOrder)
 }
 
 func timelimiterConfigBuilders(config *TimeLimiterConfig) []timelimiter.ConfigBuilder {

@@ -22,17 +22,17 @@ func TestTimeLimiter(t *testing.T) {
 		t.Errorf("Expected timelimiter is not nil, but got nil")
 	}
 
-	_, decorator := resilience.NewTimeLimiterPlugin("test", &resilience.TimeLimiterConfig{
+	decorator := resilience.NewDecorator("test", newTimeLimiterResilienceConfig(&resilience.TimeLimiterConfig{
 		TimeoutDuration:     "1s",
 		WhenTimeoutResponse: "HTTP/1.1 200 OK\r\n\r\nTimeLimiterTimeout",
-	})
+	}))
 	backend := httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r Req) {
 			time.Sleep(time.Second * 2)
 			_, _ = w.Write([]byte("success"))
 		}))
 	backendURL, _ := url.Parse(backend.URL)
-	reverseProxy := decorator(NewReverseProxy(backendURL))
+	reverseProxy := decorator.Decorate(NewReverseProxy(backendURL))
 	frontend := httptest.NewServer(reverseProxy)
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
