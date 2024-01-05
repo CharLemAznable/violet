@@ -1,7 +1,7 @@
 package resilience_test
 
 import (
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -46,11 +46,11 @@ func TestBulkhead(t *testing.T) {
 	}()
 	response1 := <-resp1
 	response2 := <-resp2
-	responseBody1, _ := DumpResponseBody(response1)
+	responseBody1, _ := ext.DumpResponseBody(response1)
 	if string(responseBody1) != "success" {
 		t.Errorf("Expected responseBody1 is 'success', but got '%s'", string(responseBody1))
 	}
-	responseBody2, _ := DumpResponseBody(response2)
+	responseBody2, _ := ext.DumpResponseBody(response2)
 	if string(responseBody2) != "BulkheadFull" {
 		t.Errorf("Expected responseBody2 is 'BulkheadFull', but got '%s'", string(responseBody2))
 	}

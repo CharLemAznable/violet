@@ -1,7 +1,7 @@
 package resilience
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	"github.com/CharLemAznable/resilience4go/retry"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -23,7 +23,7 @@ type RetryConfig struct {
 const RetryDefaultOrder = "500"
 
 func NewRetryPlugin(name string, config *RetryConfig) (retry.Retry, *OrderedDecorator) {
-	if ge.ToBool(config.Disabled) {
+	if lang.ToBool(config.Disabled) {
 		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, RetryDefaultOrder)
 	}
 	entry := retry.NewRetry(name+"_retry",
@@ -45,7 +45,7 @@ func retryConfigBuilders(config *RetryConfig) []retry.ConfigBuilder {
 		builders = append(builders, retry.WithMaxAttempts(maxAttempts))
 	}
 	builders = append(builders, retry.
-		WithFailAfterMaxAttempts(ge.ToBool(config.FailAfterMaxAttempts)))
+		WithFailAfterMaxAttempts(lang.ToBool(config.FailAfterMaxAttempts)))
 	predicate := GetRspFailedPredicate(config.ResponseFailedPredicate)
 	context := config.ResponseFailedPredicateContext
 	builders = append(builders, retry.WithFailureResultPredicate(

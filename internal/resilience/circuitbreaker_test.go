@@ -3,7 +3,7 @@ package resilience_test
 import (
 	"bufio"
 	"errors"
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -33,7 +33,7 @@ func TestCircuitBreaker(t *testing.T) {
 		WhenOverLoadResponse:                  "HTTP/1.1 200 OK\r\n\r\nCircuitBreakerNotPermitted",
 	}))
 	EnableMockRoundTrip(func(req Req) (Rsp, error) {
-		body, _ := DumpRequestBody(req)
+		body, _ := ext.DumpRequestBody(req)
 		i, _ := strconv.ParseInt(string(body), 10, 64)
 		if i%2 == 0 {
 			return http.ReadResponse(bufio.NewReader(
@@ -63,7 +63,7 @@ func TestCircuitBreaker(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL, strings.NewReader(strconv.Itoa(10)))
 	response, _ := frontend.Client().Do(request)
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if string(responseBody) != "CircuitBreakerNotPermitted" {
 		t.Errorf("Expected responseBody is 'CircuitBreakerNotPermitted', but got '%s'", string(responseBody))
 	}

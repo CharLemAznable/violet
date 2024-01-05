@@ -1,7 +1,7 @@
 package resilience
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	. "github.com/CharLemAznable/violet/internal/types"
 )
@@ -19,7 +19,7 @@ type FallbackConfig struct {
 const FallbackDefaultOrder = "700"
 
 func NewFallbackPlugin(config *FallbackConfig) *OrderedDecorator {
-	if !ge.ToBool(config.Enabled) {
+	if !lang.ToBool(config.Enabled) {
 		return newOrderedDecorator(ReverseProxyIdentity, config.Order, FallbackDefaultOrder)
 	}
 	fallbackFn := buildFallbackFunction(

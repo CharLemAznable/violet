@@ -1,7 +1,7 @@
 package resilience_test
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
 	"testing"
@@ -29,7 +29,7 @@ func TestRspFailedPredicateRegistry(t *testing.T) {
 	}
 
 	predicate := resilience.GetRspFailedPredicate("")
-	if !ge.EqualsPointer(resilience.DefaultRspFailedPredicate, predicate) {
+	if !lang.Equal(resilience.DefaultRspFailedPredicate, predicate) {
 		t.Error("Expected get DefaultRspFailedPredicate but not")
 	}
 	predicate = resilience.GetRspFailedPredicate("test")
@@ -37,7 +37,7 @@ func TestRspFailedPredicateRegistry(t *testing.T) {
 		t.Error("Expected get predicate but got nil")
 	}
 	predicate = resilience.GetRspFailedPredicate("not exist")
-	if !ge.EqualsPointer(resilience.DefaultRspFailedPredicate, predicate) {
+	if !lang.Equal(resilience.DefaultRspFailedPredicate, predicate) {
 		t.Error("Expected get DefaultRspFailedPredicate but not")
 	}
 }
@@ -64,7 +64,7 @@ func TestRspCachePredicateRegistry(t *testing.T) {
 	}
 
 	predicate := resilience.GetRspCachePredicate("")
-	if !ge.EqualsPointer(resilience.DefaultRspCachePredicate, predicate) {
+	if !lang.Equal(resilience.DefaultRspCachePredicate, predicate) {
 		t.Error("Expected get DefaultRspCachePredicate but not")
 	}
 	predicate = resilience.GetRspCachePredicate("test")
@@ -72,7 +72,7 @@ func TestRspCachePredicateRegistry(t *testing.T) {
 		t.Error("Expected get predicate but got nil")
 	}
 	predicate = resilience.GetRspCachePredicate("not exist")
-	if !ge.EqualsPointer(resilience.DefaultRspCachePredicate, predicate) {
+	if !lang.Equal(resilience.DefaultRspCachePredicate, predicate) {
 		t.Error("Expected get DefaultRspCachePredicate but not")
 	}
 }

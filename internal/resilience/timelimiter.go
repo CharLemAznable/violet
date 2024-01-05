@@ -1,7 +1,7 @@
 package resilience
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	"github.com/CharLemAznable/resilience4go/timelimiter"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -18,7 +18,7 @@ type TimeLimiterConfig struct {
 const TimeLimiterDefaultOrder = "200"
 
 func NewTimeLimiterPlugin(name string, config *TimeLimiterConfig) (timelimiter.TimeLimiter, *OrderedDecorator) {
-	if ge.ToBool(config.Disabled) {
+	if lang.ToBool(config.Disabled) {
 		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, TimeLimiterDefaultOrder)
 	}
 	entry := timelimiter.NewTimeLimiter(name+"_timelimiter",

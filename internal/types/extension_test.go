@@ -2,7 +2,7 @@ package types_test
 
 import (
 	"errors"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/violet/internal/types"
 	"net/http/httputil"
 	"testing"
@@ -11,7 +11,7 @@ import (
 func TestReverseProxyIdentity(t *testing.T) {
 	reverseProxy := &httputil.ReverseProxy{}
 	decorated := types.ReverseProxyIdentity(reverseProxy)
-	if !ge.EqualsPointer(reverseProxy, decorated) {
+	if !lang.Equal(reverseProxy, decorated) {
 		t.Error("Expected equal pointer but not")
 	}
 }

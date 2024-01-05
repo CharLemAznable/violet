@@ -1,11 +1,10 @@
 package resilience
 
 import (
-	"errors"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/ext"
+	"github.com/CharLemAznable/gogo/lang"
 	. "github.com/CharLemAznable/violet/internal/types"
 	"net/http"
-	"sync"
 )
 
 type RspFailedPredicate = func(Rsp, map[string]string) bool
@@ -14,47 +13,15 @@ func DefaultRspFailedPredicate(rsp Rsp, _ map[string]string) bool {
 	return rsp.StatusCode >= http.StatusInternalServerError
 }
 
-type rspFailedPredicateRegistry struct {
-	sync.RWMutex
-	table map[string]RspFailedPredicate
-}
-
-func (r *rspFailedPredicateRegistry) register(name string, predicate RspFailedPredicate) error {
-	r.Lock()
-	defer r.Unlock()
-	if nil == predicate {
-		return errors.New("RspFailedPredicate: predicate is nil")
-	}
-	if name == "" {
-		return errors.New("RspFailedPredicate: illegal name \"\"")
-	}
-	if _, exist := r.table[name]; exist {
-		return errors.New("RspFailedPredicate: multiple registrations for \"" + name + "\"")
-	}
-	r.table[name] = predicate
-	return nil
-}
-
-func (r *rspFailedPredicateRegistry) get(name string) RspFailedPredicate {
-	r.RLock()
-	defer r.RUnlock()
-	if name == "" {
-		return DefaultRspFailedPredicate
-	}
-	if predicate, exist := r.table[name]; exist {
-		return predicate
-	}
-	return DefaultRspFailedPredicate
-}
-
-var rspFailedPredicateRegister = &rspFailedPredicateRegistry{table: make(map[string]RspFailedPredicate)}
+var rspFailedPredicateRegister = ext.NewDefaultRegistry("", DefaultRspFailedPredicate)
 
 func RegisterRspFailedPredicate(name string, predicate RspFailedPredicate) error {
-	return rspFailedPredicateRegister.register(name, predicate)
+	return rspFailedPredicateRegister.Register(name, predicate)
 }
 
 func GetRspFailedPredicate(name string) RspFailedPredicate {
-	return rspFailedPredicateRegister.get(name)
+	predicate, _ := rspFailedPredicateRegister.Get(name)
+	return predicate
 }
 
 func buildFailureResultPredicate(
@@ -64,8 +31,8 @@ func buildFailureResultPredicate(
 		if err != nil {
 			return true
 		}
-		rsp, err := ge.Cast[Rsp](ret)
-		ge.PanicIfError(err)
+		rsp, err := lang.Cast[Rsp](ret)
+		lang.PanicIfError(err)
 		return predicate(rsp, context)
 	}
 }
@@ -80,47 +47,15 @@ func DefaultRspCachePredicate(rsp Rsp, _ map[string]string) bool {
 		rsp.StatusCode == http.StatusNotFound
 }
 
-type rspCachePredicateRegistry struct {
-	sync.RWMutex
-	table map[string]RspCachePredicate
-}
-
-func (r *rspCachePredicateRegistry) register(name string, predicate RspCachePredicate) error {
-	r.Lock()
-	defer r.Unlock()
-	if nil == predicate {
-		return errors.New("RspCachePredicate: predicate is nil")
-	}
-	if name == "" {
-		return errors.New("RspCachePredicate: illegal name \"\"")
-	}
-	if _, exist := r.table[name]; exist {
-		return errors.New("RspCachePredicate: multiple registrations for \"" + name + "\"")
-	}
-	r.table[name] = predicate
-	return nil
-}
-
-func (r *rspCachePredicateRegistry) get(name string) RspCachePredicate {
-	r.RLock()
-	defer r.RUnlock()
-	if name == "" {
-		return DefaultRspCachePredicate
-	}
-	if predicate, exist := r.table[name]; exist {
-		return predicate
-	}
-	return DefaultRspCachePredicate
-}
-
-var rspCachePredicateRegister = &rspCachePredicateRegistry{table: make(map[string]RspCachePredicate)}
+var rspCachePredicateRegister = ext.NewDefaultRegistry("", DefaultRspCachePredicate)
 
 func RegisterRspCachePredicate(name string, predicate RspCachePredicate) error {
-	return rspCachePredicateRegister.register(name, predicate)
+	return rspCachePredicateRegister.Register(name, predicate)
 }
 
 func GetRspCachePredicate(name string) RspCachePredicate {
-	return rspCachePredicateRegister.get(name)
+	predicate, _ := rspCachePredicateRegister.Get(name)
+	return predicate
 }
 
 func buildCacheResultPredicate(
@@ -130,8 +65,8 @@ func buildCacheResultPredicate(
 		if err != nil {
 			return false
 		}
-		rsp, err := ge.Cast[Rsp](ret)
-		ge.PanicIfError(err)
+		rsp, err := lang.Cast[Rsp](ret)
+		lang.PanicIfError(err)
 		return predicate(rsp, context)
 	}
 }
@@ -140,41 +75,15 @@ func buildCacheResultPredicate(
 
 type FallbackFunction = func(Req, map[string]string) (Rsp, error)
 
-type fallbackFunctionRegistry struct {
-	sync.RWMutex
-	table map[string]FallbackFunction
-}
-
-func (r *fallbackFunctionRegistry) register(name string, function FallbackFunction) error {
-	r.Lock()
-	defer r.Unlock()
-	if nil == function {
-		return errors.New("FallbackFunction: function is nil")
-	}
-	if name == "" {
-		return errors.New("FallbackFunction: illegal name \"\"")
-	}
-	if _, exist := r.table[name]; exist {
-		return errors.New("FallbackFunction: multiple registrations for \"" + name + "\"")
-	}
-	r.table[name] = function
-	return nil
-}
-
-func (r *fallbackFunctionRegistry) get(name string) FallbackFunction {
-	r.RLock()
-	defer r.RUnlock()
-	return r.table[name]
-}
-
-var fallbackFunctionRegister = &fallbackFunctionRegistry{table: make(map[string]FallbackFunction)}
+var fallbackFunctionRegister = ext.NewDefaultRegistry("", FallbackFunction(nil))
 
 func RegisterFallbackFunction(name string, function FallbackFunction) error {
-	return fallbackFunctionRegister.register(name, function)
+	return fallbackFunctionRegister.Register(name, function)
 }
 
 func GetFallbackFunction(name string) FallbackFunction {
-	return fallbackFunctionRegister.get(name)
+	function, _ := fallbackFunctionRegister.Get(name)
+	return function
 }
 
 func buildFallbackFunction(

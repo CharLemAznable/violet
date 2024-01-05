@@ -2,7 +2,7 @@ package violet
 
 import (
 	"fmt"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/promhelper"
 	"github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
@@ -210,17 +210,17 @@ type endpoint struct {
 
 func newEndpoint(config *EndpointConfig) *endpoint {
 	targetURL, err := url.Parse(config.TargetURL)
-	ge.PanicIfError(err)
+	lang.PanicIfError(err)
 	e := &endpoint{
 		name:                config.Name,
 		location:            config.Location,
-		stripLocationPrefix: ge.ToBool(config.StripLocationPrefix),
+		stripLocationPrefix: lang.ToBool(config.StripLocationPrefix),
 		proxy:               proxy.NewReverseProxy(targetURL),
 	}
-	e.proxy = proxy.DumpDecorator(ge.ToBool(config.DumpTarget), proxy.TargetDump, e.name)(e.proxy)
+	e.proxy = proxy.DumpDecorator(lang.ToBool(config.DumpTarget), proxy.TargetDump, e.name)(e.proxy)
 	e.resilience = resilience.NewDecorator(e.name, &config.Resilience)
 	e.proxy = e.resilience.Decorate(e.proxy)
-	e.proxy = proxy.DumpDecorator(ge.ToBool(config.DumpSource), proxy.SourceDump, e.name)(e.proxy)
+	e.proxy = proxy.DumpDecorator(lang.ToBool(config.DumpSource), proxy.SourceDump, e.name)(e.proxy)
 	e.registerFn = func(registerer prometheus.Registerer) error {
 		err := prometheus.MultiError{}
 		err.Append(e.resilience.RegisterFn(registerer))

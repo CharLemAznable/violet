@@ -4,9 +4,8 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/CharLemAznable/ge v0.2.0
-	github.com/CharLemAznable/pubsub v0.2.0
-	github.com/CharLemAznable/resilience4go v0.7.0
+	github.com/CharLemAznable/gogo v0.3.0
+	github.com/CharLemAznable/resilience4go v0.9.0
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/prometheus/client_golang v1.17.0
 )

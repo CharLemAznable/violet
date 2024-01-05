@@ -1,6 +1,7 @@
 package resilience
 
 import (
+	"github.com/CharLemAznable/gogo/ext"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/cache"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
@@ -31,14 +32,14 @@ type Decorator struct {
 	Retry          retry.Retry
 	Cache          cache.Cache[Req, Rsp]
 
-	decorators OrderedDecoratorSlice
+	decorators ext.OrderedSlice[*OrderedDecorator]
 
 	RegisterFn   promhelper.RegisterFn
 	UnregisterFn promhelper.UnregisterFn
 }
 
 func NewDecorator(name string, config *Config) *Decorator {
-	e := &Decorator{decorators: make(OrderedDecoratorSlice, 7)}
+	e := &Decorator{decorators: make(ext.OrderedSlice[*OrderedDecorator], 7)}
 	e.Bulkhead, e.decorators[0] = NewBulkheadPlugin(name, &config.Bulkhead)
 	e.TimeLimiter, e.decorators[1] = NewTimeLimiterPlugin(name, &config.TimeLimiter)
 	e.RateLimiter, e.decorators[2] = NewRateLimiterPlugin(name, &config.RateLimiter)

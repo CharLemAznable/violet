@@ -3,7 +3,7 @@ package resilience
 import (
 	"bufio"
 	"bytes"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/cache"
 	. "github.com/CharLemAznable/violet/internal/types"
 	"github.com/dgraph-io/ristretto/z"
@@ -25,7 +25,7 @@ type CacheConfig struct {
 const CacheDefaultOrder = "600"
 
 func NewCachePlugin(name string, config *CacheConfig) (cache.Cache[Req, Rsp], *OrderedDecorator) {
-	if !ge.ToBool(config.Enabled) {
+	if !lang.ToBool(config.Enabled) {
 		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, CacheDefaultOrder)
 	}
 	entry := cache.NewCache[Req, Rsp](name+"_cache",
@@ -54,10 +54,10 @@ func cacheConfigBuilders(config *CacheConfig) []cache.ConfigBuilder {
 	}
 	builders = append(builders, cache.WithKeyToHash(
 		func(key any) (uint64, uint64) {
-			req, err := ge.Cast[Req](key)
-			ge.PanicIfError(err)
+			req, err := lang.Cast[Req](key)
+			lang.PanicIfError(err)
 			dumpRequest, err := httputil.DumpRequest(req, true)
-			ge.PanicIfError(err)
+			lang.PanicIfError(err)
 			return z.KeyToHash(dumpRequest)
 		}))
 	predicate := GetRspCachePredicate(config.ResponseCachePredicate)
@@ -69,15 +69,15 @@ func cacheConfigBuilders(config *CacheConfig) []cache.ConfigBuilder {
 
 func marshalFn(rsp Rsp) any {
 	dumpResponse, err := httputil.DumpResponse(rsp, true)
-	ge.PanicIfError(err)
+	lang.PanicIfError(err)
 	return dumpResponse
 }
 
 func unmarshalFn(v any) Rsp {
-	dumpResponse, err := ge.Cast[[]byte](v)
-	ge.PanicIfError(err)
+	dumpResponse, err := lang.Cast[[]byte](v)
+	lang.PanicIfError(err)
 	rsp, err := http.ReadResponse(bufio.
 		NewReader(bytes.NewReader(dumpResponse)), nil)
-	ge.PanicIfError(err)
+	lang.PanicIfError(err)
 	return rsp
 }

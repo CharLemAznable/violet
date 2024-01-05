@@ -1,7 +1,7 @@
 package resilience
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -21,7 +21,7 @@ type RateLimiterConfig struct {
 const RateLimiterDefaultOrder = "300"
 
 func NewRateLimiterPlugin(name string, config *RateLimiterConfig) (ratelimiter.RateLimiter, *OrderedDecorator) {
-	if ge.ToBool(config.Disabled) {
+	if lang.ToBool(config.Disabled) {
 		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, RateLimiterDefaultOrder)
 	}
 	entry := ratelimiter.NewRateLimiter(name+"_ratelimiter",

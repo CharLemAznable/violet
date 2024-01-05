@@ -3,8 +3,8 @@ package resilience_test
 import (
 	"bufio"
 	"errors"
-	"github.com/CharLemAznable/ge"
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
+	"github.com/CharLemAznable/gogo/lang"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -17,12 +17,12 @@ import (
 
 func TestFallbackNotEnabled(t *testing.T) {
 	decorator := resilience.NewFallbackPlugin(&resilience.FallbackConfig{})
-	if !ge.EqualsPointer(ReverseProxyIdentity, decorator.Decorator) {
+	if !lang.Equal(ReverseProxyIdentity, decorator.Decorator) {
 		t.Error("Expected get ReverseProxyIdentity but not")
 	}
 
 	decorator = resilience.NewFallbackPlugin(&resilience.FallbackConfig{Enabled: "true"})
-	if !ge.EqualsPointer(ReverseProxyIdentity, decorator.Decorator) {
+	if !lang.Equal(ReverseProxyIdentity, decorator.Decorator) {
 		t.Error("Expected get ReverseProxyIdentity but not")
 	}
 }
@@ -41,7 +41,7 @@ func TestFallbackResponse(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
 	response, _ := frontend.Client().Do(request)
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if string(responseBody) != "FallbackResponse" {
 		t.Errorf("Expected responseBody is 'FallbackResponse', but got '%s'", string(responseBody))
 	}
@@ -68,7 +68,7 @@ func TestFallbackFunction(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
 	response, _ := frontend.Client().Do(request)
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if string(responseBody) != "FallbackFunction" {
 		t.Errorf("Expected responseBody is 'FallbackFunction', but got '%s'", string(responseBody))
 	}
@@ -91,7 +91,7 @@ func TestFallback(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
 	response, _ := frontend.Client().Do(request)
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if string(responseBody) != "FallbackResponse" {
 		t.Errorf("Expected responseBody is 'FallbackResponse', but got '%s'", string(responseBody))
 	}

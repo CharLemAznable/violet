@@ -1,7 +1,7 @@
 package resilience_test
 
 import (
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -37,7 +37,7 @@ func TestTimeLimiter(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
 	response, _ := frontend.Client().Do(request)
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if string(responseBody) != "TimeLimiterTimeout" {
 		t.Errorf("Expected responseBody is 'TimeLimiterTimeout', but got '%s'", string(responseBody))
 	}

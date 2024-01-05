@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -45,40 +45,40 @@ func TestCache(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL+"?code=200", nil)
 	response, _ := frontend.Client().Do(request)
-	responseBody1, _ := DumpResponseBody(response)
+	responseBody1, _ := ext.DumpResponseBody(response)
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=200", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody2, _ := DumpResponseBody(response)
+	responseBody2, _ := ext.DumpResponseBody(response)
 	if string(responseBody1) != string(responseBody2) {
 		t.Errorf("Expected code 200 cached, but got '%s' and '%s'", string(responseBody1), string(responseBody2))
 	}
 
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=301", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody1, _ = DumpResponseBody(response)
+	responseBody1, _ = ext.DumpResponseBody(response)
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=301", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody2, _ = DumpResponseBody(response)
+	responseBody2, _ = ext.DumpResponseBody(response)
 	if string(responseBody1) != string(responseBody2) {
 		t.Errorf("Expected code 301 cached, but got '%s' and '%s'", string(responseBody1), string(responseBody2))
 	}
 
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=404", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody1, _ = DumpResponseBody(response)
+	responseBody1, _ = ext.DumpResponseBody(response)
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=404", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody2, _ = DumpResponseBody(response)
+	responseBody2, _ = ext.DumpResponseBody(response)
 	if string(responseBody1) != string(responseBody2) {
 		t.Errorf("Expected code 404 cached, but got '%s' and '%s'", string(responseBody1), string(responseBody2))
 	}
 
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=500", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody1, _ = DumpResponseBody(response)
+	responseBody1, _ = ext.DumpResponseBody(response)
 	request, _ = http.NewRequest("GET", frontend.URL+"?code=500", nil)
 	response, _ = frontend.Client().Do(request)
-	responseBody2, _ = DumpResponseBody(response)
+	responseBody2, _ = ext.DumpResponseBody(response)
 	if string(responseBody1) == string(responseBody2) {
 		t.Errorf("Expected code 500 not cached, but got '%s' and '%s'", string(responseBody1), string(responseBody2))
 	}

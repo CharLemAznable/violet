@@ -2,7 +2,7 @@ package resilience_test
 
 import (
 	"bufio"
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -35,7 +35,7 @@ func TestRetry(t *testing.T) {
 
 	request, _ := http.NewRequest("GET", frontend.URL, nil)
 	response, _ := frontend.Client().Do(request)
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if string(responseBody) != "RetryMaxRetries" {
 		t.Errorf("Expected responseBody is 'RetryMaxRetries', but got '%s'", string(responseBody))
 	}

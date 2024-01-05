@@ -1,7 +1,7 @@
 package resilience
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -31,7 +31,7 @@ type CircuitBreakerConfig struct {
 const CircuitBreakerDefaultOrder = "400"
 
 func NewCircuitBreakerPlugin(name string, config *CircuitBreakerConfig) (circuitbreaker.CircuitBreaker, *OrderedDecorator) {
-	if ge.ToBool(config.Disabled) {
+	if lang.ToBool(config.Disabled) {
 		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, CircuitBreakerDefaultOrder)
 	}
 	entry := circuitbreaker.NewCircuitBreaker(name+"_circuitbreaker",
@@ -109,7 +109,7 @@ func configOpenState(config *CircuitBreakerConfig) []circuitbreaker.ConfigBuilde
 	var builders []circuitbreaker.ConfigBuilder
 	builders = append(builders, circuitbreaker.
 		WithAutomaticTransitionFromOpenToHalfOpenEnabled(
-			ge.ToBool(config.AutomaticTransitionFromOpenToHalfOpen)))
+			lang.ToBool(config.AutomaticTransitionFromOpenToHalfOpen)))
 	if waitIntervalInOpenState, err := time.ParseDuration(
 		config.WaitIntervalInOpenState); err == nil {
 		builders = append(builders, circuitbreaker.

@@ -2,8 +2,7 @@ package proxy_test
 
 import (
 	"bufio"
-	"github.com/CharLemAznable/pubsub"
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	"github.com/CharLemAznable/violet/internal/proxy"
 	. "github.com/CharLemAznable/violet/internal/types"
 	"log"
@@ -17,8 +16,8 @@ import (
 )
 
 func TestNewReverseProxy(t *testing.T) {
-	subscriber := pubsub.SubscribeFunc[*proxy.DumpMessage](logDumpMessage)
-	pubsub.Subscribe(proxy.DumpTopic, subscriber)
+	subscriber := ext.SubFn(logDumpMessage)
+	ext.Subscribe(proxy.DumpTopic, subscriber)
 	body := "dump content"
 	testServer := httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r Req) {
@@ -44,7 +43,7 @@ func TestNewReverseProxy(t *testing.T) {
 	if actualHost != testServerURL.Host {
 		t.Errorf("Expected actual host is '%s', but got '%s'", testServerURL.Host, actualHost)
 	}
-	responseBody, _ := DumpResponseBody(response)
+	responseBody, _ := ext.DumpResponseBody(response)
 	if body != string(responseBody) {
 		t.Errorf("Expected responseBody is '%s', but got '%s'", body, string(responseBody))
 	}
@@ -58,13 +57,13 @@ func TestNewReverseProxy(t *testing.T) {
 	if response.StatusCode != http.StatusOK {
 		t.Errorf("Expected status code is 200, but got '%d'", response.StatusCode)
 	}
-	responseBody, _ = DumpResponseBody(response)
+	responseBody, _ = ext.DumpResponseBody(response)
 	if "OK" != string(responseBody) {
 		t.Errorf("Expected responseBody is 'OK', but got '%s'", string(responseBody))
 	}
 	proxy.DisableMockRoundTrip()
 	time.Sleep(time.Second)
-	pubsub.Unsubscribe(proxy.DumpTopic, subscriber)
+	ext.Unsubscribe(proxy.DumpTopic, subscriber)
 }
 
 var dumpLogger = log.New(os.Stdout, "violet >> ", log.LstdFlags|log.Lmsgprefix)

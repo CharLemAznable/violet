@@ -1,7 +1,7 @@
 package resilience_test
 
 import (
-	. "github.com/CharLemAznable/violet/internal/elf"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/proxy"
 	"github.com/CharLemAznable/violet/internal/resilience"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -49,9 +49,9 @@ func TestRateLimiter(t *testing.T) {
 	response0 := <-responses[0]
 	response1 := <-responses[1]
 	response2 := <-responses[2]
-	responseBody0, _ := DumpResponseBody(response0)
-	responseBody1, _ := DumpResponseBody(response1)
-	responseBody2, _ := DumpResponseBody(response2)
+	responseBody0, _ := ext.DumpResponseBody(response0)
+	responseBody1, _ := ext.DumpResponseBody(response1)
+	responseBody2, _ := ext.DumpResponseBody(response2)
 	bodies := []string{string(responseBody0), string(responseBody1), string(responseBody2)}
 	sort.Strings(bodies)
 	if bodies[0] != "RateLimiterNotPermitted" {

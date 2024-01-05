@@ -1,7 +1,7 @@
 package resilience
 
 import (
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	. "github.com/CharLemAznable/violet/internal/types"
@@ -20,7 +20,7 @@ type BulkheadConfig struct {
 const BulkheadDefaultOrder = "100"
 
 func NewBulkheadPlugin(name string, config *BulkheadConfig) (bulkhead.Bulkhead, *OrderedDecorator) {
-	if ge.ToBool(config.Disabled) {
+	if lang.ToBool(config.Disabled) {
 		return nil, newOrderedDecorator(ReverseProxyIdentity, config.Order, BulkheadDefaultOrder)
 	}
 	entry := bulkhead.NewBulkhead(name+"_bulkhead",

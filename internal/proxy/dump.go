@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/CharLemAznable/pubsub"
+	"github.com/CharLemAznable/gogo/ext"
 	. "github.com/CharLemAznable/violet/internal/types"
 	"net/http/httputil"
 	"time"
@@ -57,7 +57,7 @@ func publishRequest(request Req, dumpType DumpType, name string) {
 			UnixNano:    time.Now().UnixNano(),
 		}
 		message.Content, message.Error = httputil.DumpRequest(request, true)
-		go pubsub.Publish(DumpTopic, message)
+		go ext.Publish(DumpTopic, message)
 	}
 }
 
@@ -70,6 +70,6 @@ func publishResponse(response Rsp, dumpType DumpType, name string) {
 			UnixNano:    time.Now().UnixNano(),
 		}
 		message.Content, message.Error = httputil.DumpResponse(response, true)
-		go pubsub.Publish(DumpTopic, message)
+		go ext.Publish(DumpTopic, message)
 	}
 }

@@ -1,5 +1,7 @@
 package violet
 
+import "github.com/CharLemAznable/gogo/ext"
+
 func formatResilienceConfig(cfg *ResilienceConfig, def *ResilienceConfig) {
 	formatBulkheadConfig(&cfg.Bulkhead, &def.Bulkhead)
 	formatTimeLimiterConfig(&cfg.TimeLimiter, &def.TimeLimiter)
@@ -83,19 +85,9 @@ func formatFallbackConfig(cfg *FallbackConfig, def *FallbackConfig) {
 }
 
 func defaultString(v string, def string) string {
-	if v == "" {
-		return def
-	}
-	return v
+	return ext.EmptyThen(v, func() string { return def })
 }
 
 func defaultMap(v map[string]string, def map[string]string) map[string]string {
-	ret := make(map[string]string)
-	for key, value := range v {
-		ret[key] = value
-	}
-	for key, value := range def {
-		ret[key] = value
-	}
-	return ret
+	return ext.MapWithDefault(v, def)
 }
